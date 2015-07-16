@@ -1,1 +1,1 @@
-*/10 * * * * /home/blieberman/golf-script.py > /dev/null 2>&1
+*/10 * * * * $YOUR_SCRIPT_PATH/golf-script.py > /dev/null 2>&1

@@ -6,26 +6,38 @@ import requests
 import time
 import datetime
 
+SPORTSAPI_KEY = ""
+SPORTSAPI_TOURAMENT = ""
+GOLF_LEADERBOARD = "http://api.sportsdatallc.org/golf-t1/leaderboard/pga/2015/tournaments/" + SPORTSAPI_TOURAMENT + "/leaderboard.json?api_key=" + SPORTSAPI_KEY
+GDOC_KEY = ""
+GDOC_SHEET_NAME = ""
+
+# returns round number based on day of week
 def getRound():
   round = datetime.datetime.today().weekday() - 2
   return round
 
+###AUTHENTICATION TO GOOGLE###
 from oauth2client.client import GoogleCredentials
 credentials = GoogleCredentials.get_application_default()
 credentials = credentials.create_scoped(['https://spreadsheets.google.com/feeds'])
 
-GOLF_LEADERBOARD = "http://api.sportsdatallc.org/golf-t1/leaderboard/pga/2015/tournaments/f5897f1c-159d-432f-b774-50438ee6e0c7/leaderboard.json?api_key=47cck4gyk9zsa4crkjthtkcn"
+gc = gspread.authorize(credentials)
+sh = gc.open_by_key(GDOC_KEY)
+######
+
 ROUND = getRound()
 
-gc = gspread.authorize(credentials)
-sh = gc.open_by_key('1bDt2NQulTVks0UFypCtD80YC9yR5HkjxHwCW3m2lmNs')
-
-mainsh = sh.worksheet("Open Championship 2015")
+###OPEN SPREADSHEET###
+mainsh = sh.worksheet(GDOC_SHEET_NAME)
+# set player name range based on your spreadsheet
 players_clist = mainsh.range('A13:A37')
 
+# get the full leaderboard
 r = requests.get(GOLF_LEADERBOARD)
 scores = r.json()
 
+# parse scores and push data to spreadsheet in correct format
 for player in scores["leaderboard"]:
   name = player["first_name"] + " " + player["last_name"]
 
@@ -36,5 +48,5 @@ for player in scores["leaderboard"]:
       mainsh.update_cell(gplayer.row, (gplayer.col + ROUND), score)
       print score
       break
-
+# 1 call/sec limit on trial sports api
   time.sleep(1)
