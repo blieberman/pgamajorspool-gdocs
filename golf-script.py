@@ -5,6 +5,7 @@ import json
 import requests
 import time
 import datetime
+from oauth2client.client import GoogleCredentials
 
 SPORTSAPI_KEY = ""
 SPORTSAPI_TOURAMENT = ""
@@ -18,7 +19,6 @@ def getRound():
   return round
 
 ###AUTHENTICATION TO GOOGLE###
-from oauth2client.client import GoogleCredentials
 credentials = GoogleCredentials.get_application_default()
 credentials = credentials.create_scoped(['https://spreadsheets.google.com/feeds'])
 
