@@ -50,7 +50,8 @@ def main():
             gname = gplayer.value
             if name == gname and player["status"] == "active":
                 round_score = player["today"]
-                if not round_score:
+                thru = player["thru"]
+                if not thru:
                     round_score = ""
                 mainsh.update_cell(gplayer.row, (gplayer.col + ROUND), round_score)
                 # debug
