@@ -49,13 +49,12 @@ def main():
         for gplayer in players_clist:
             gname = gplayer.value
             if name == gname and player["status"] == "active":
-                score = player["rounds"][ROUND - 1]["strokes"]
-                today = player["today"]
-                if not today:
-                    score = ""
-                mainsh.update_cell(gplayer.row, (gplayer.col + ROUND), score)
+                round_score = player["today"]
+                if not round_score:
+                    round_score = ""
+                mainsh.update_cell(gplayer.row, (gplayer.col + ROUND), round_score)
                 # debug
-                print("%s: %s" % (name, score))
+                print("%s: %s" % (name, round_score))
                 break
 
 
