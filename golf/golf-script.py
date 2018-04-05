@@ -1,52 +1,63 @@
 #!/usr/bin/env python
 
-import gspread
 import json
 import requests
 import time
 import datetime
-from oauth2client.client import GoogleCredentials
+import os
+import logging
+import gspread
+import sys
+from oauth2client.service_account import ServiceAccountCredentials
 
-SPORTSAPI_KEY = ""
-SPORTSAPI_TOURAMENT = ""
-GOLF_LEADERBOARD = "http://api.sportsdatallc.org/golf-t1/leaderboard/pga/2015/tournaments/" + SPORTSAPI_TOURAMENT + "/leaderboard.json?api_key=" + SPORTSAPI_KEY
-GDOC_KEY = ""
-GDOC_SHEET_NAME = ""
+# get the id at https://statdata.pgatour.com/r/current/message.json
+TOURNAMENT_ID = "014"
+GOLF_LEADERBOARD = "https://statdata.pgatour.com/r/" + TOURNAMENT_ID + "/leaderboard-v2mini.json"
+
+GDOC_JSON_KEY_PATH = os.path.join(os.path.expanduser("~"), 'google_application_credentials.json')
+GDOC_KEY = "1bDt2NQulTVks0UFypCtD80YC9yR5HkjxHwCW3m2lmNs"
+GDOC_FEED_ENDPOINT = "https://spreadsheets.google.com/feeds"
+GDOC_SHEET_NAME = "Masters 2018"
+
 
 # returns round number based on day of week
 def getRound():
-  round = datetime.datetime.today().weekday() - 2
-  return round
+    round = datetime.datetime.today().weekday() - 2
+    return round
 
-###AUTHENTICATION TO GOOGLE###
-credentials = GoogleCredentials.get_application_default()
-credentials = credentials.create_scoped(['https://spreadsheets.google.com/feeds'])
 
-gc = gspread.authorize(credentials)
-sh = gc.open_by_key(GDOC_KEY)
-######
+def main():
+    # authenticate to google
+    scope = [GDOC_FEED_ENDPOINT]
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(GDOC_JSON_KEY_PATH, scope)
+    gc = gspread.authorize(credentials)
+    sh = gc.open_by_key(GDOC_KEY)
+    # open spreadsheet
+    mainsh = sh.worksheet(GDOC_SHEET_NAME)
+    # set player name range based on your spreadsheet
+    players_clist = mainsh.range('A24:A60')
+    # get the round
+    ROUND = getRound()
+    # get the full leaderboard from api
+    r = requests.get(GOLF_LEADERBOARD)
+    scores = r.json()
 
-ROUND = getRound()
+    # parse scores and push data to spreadsheet in correct format
+    for player in scores["leaderboard"]["players"]:
+        name = player["player_bio"]["first_name"] + " " + player["player_bio"]["last_name"]
 
-###OPEN SPREADSHEET###
-mainsh = sh.worksheet(GDOC_SHEET_NAME)
-# set player name range based on your spreadsheet
-players_clist = mainsh.range('A13:A37')
+        for gplayer in players_clist:
+            gname = gplayer.value
+            if name == gname and player["status"] == "active":
+                score = player["rounds"][ROUND - 1]["strokes"]
+                today = player["today"]
+                if not today:
+                    score = ""
+                mainsh.update_cell(gplayer.row, (gplayer.col + ROUND), score)
+                # debug
+                print("%s: %s" % (name, score))
+                break
 
-# get the full leaderboard
-r = requests.get(GOLF_LEADERBOARD)
-scores = r.json()
 
-# parse scores and push data to spreadsheet in correct format
-for player in scores["leaderboard"]:
-  name = player["first_name"] + " " + player["last_name"]
-
-  for gplayer in players_clist:
-    gname = gplayer.value
-    if (name == gname and not player.has_key("status")):
-      score = player["rounds"][ROUND - 1]["score"]
-      mainsh.update_cell(gplayer.row, (gplayer.col + ROUND), score)
-      print score
-      break
-# 1 call/sec limit on trial sports api
-  time.sleep(1)
+if __name__ == '__main__':
+    sys.exit(main())
