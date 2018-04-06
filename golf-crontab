@@ -1,1 +1,1 @@
-*/10 * * * * $YOUR_SCRIPT_PATH/golf-script.py > /dev/null 2>&1
+*/5 * * * * source /home/blieberman/pgamajorspool-gdocs/env/bin/activate && /home/blieberman/pgamajorspool-gdocs/golf/golf-script.py > /dev/null 2>&1
