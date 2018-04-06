@@ -76,7 +76,7 @@ def main():
         if ename:
             weighted_score = mainsh.cell((entry.row + 7), entry.col).value
             if weighted_score == "CUT":
-                continue
+                weighted_score = 999
             entry_score[ename] = int(weighted_score)
 
     entries_clist = mainsh.range('B10:Q10')
@@ -85,12 +85,12 @@ def main():
         if ename:
             weighted_score = mainsh.cell((entry.row + 7), entry.col).value
             if weighted_score == "CUT":
-                continue
+                weighted_score = 999
             entry_score[ename] = int(weighted_score)
 
     # sort the dict by weighted score
     ordered_entry_score = sorted(entry_score.items(), key=operator.itemgetter(1))
-    range_build = "T" + str(3) + ":U" + str(27)
+    range_build = "T" + str(3) + ":U" + str(30)
     cell_list = mainsh.range(range_build)
 
     cell_index = 0
@@ -98,8 +98,10 @@ def main():
     for entry in ordered_entry_score:
         entry_name = entry[0]
         score = entry[1]
+        if score == 999:
+            score = "FUCK YOU"
 
-        if entry_name and score:
+        if entry_name:
             cell_list[cell_index].value = str(entry_name)
             cell_index += 1
             cell_list[cell_index].value = str(score)
