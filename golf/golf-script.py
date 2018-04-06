@@ -90,7 +90,7 @@ def main():
 
     # sort the dict by weighted score
     ordered_entry_score = sorted(entry_score.items(), key=operator.itemgetter(1))
-    range_build = "T" + str(3) + ":U" + str(30)
+    range_build = "J" + str(25) + ":K" + str(55)
     cell_list = mainsh.range(range_build)
 
     cell_index = 0
