@@ -61,6 +61,11 @@ def main():
                 print("%s: %s" % (name, round_score))
                 break
 
+    # update the cut line
+    projected_cut = scores["leaderboard"]["cut_line"]["cut_line_score"]
+    mainsh.update_cell(22, 1, projected_cut)
+    print("projected_cut: %s" % projected_cut)
+
     # create ranked scoreboard for google sheet entries
     # create an entry to scores dict
     entry_score = defaultdict(int)
@@ -69,15 +74,19 @@ def main():
     for entry in entries_clist:
         ename = entry.value
         if ename:
-            weighted_score = int(mainsh.cell((entry.row + 7), entry.col).value)
-            entry_score[ename] = weighted_score
+            weighted_score = mainsh.cell((entry.row + 7), entry.col).value
+            if weighted_score == "CUT":
+                continue
+            entry_score[ename] = int(weighted_score)
 
     entries_clist = mainsh.range('B10:Q10')
     for entry in entries_clist:
         ename = entry.value
         if ename:
-            weighted_score = int(mainsh.cell((entry.row + 7), entry.col).value)
-            entry_score[ename] = weighted_score
+            weighted_score = mainsh.cell((entry.row + 7), entry.col).value
+            if weighted_score == "CUT":
+                continue
+            entry_score[ename] = int(weighted_score)
 
     # sort the dict by weighted score
     ordered_entry_score = sorted(entry_score.items(), key=operator.itemgetter(1))
@@ -102,3 +111,4 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+
