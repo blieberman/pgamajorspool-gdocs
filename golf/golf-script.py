@@ -8,6 +8,8 @@ import os
 import logging
 import gspread
 import sys
+from collections import defaultdict
+import operator
 from oauth2client.service_account import ServiceAccountCredentials
 
 # get the id at https://statdata.pgatour.com/r/current/message.json
@@ -39,6 +41,7 @@ def main():
     # get the round
     ROUND = getRound()
     # get the full leaderboard from api
+
     r = requests.get(GOLF_LEADERBOARD)
     scores = r.json()
 
@@ -57,6 +60,44 @@ def main():
                 # debug
                 print("%s: %s" % (name, round_score))
                 break
+
+    # create ranked scoreboard for google sheet entries
+    # create an entry to scores dict
+    entry_score = defaultdict(int)
+
+    entries_clist = mainsh.range('B1:Q1')
+    for entry in entries_clist:
+        ename = entry.value
+        if ename:
+            weighted_score = int(mainsh.cell((entry.row + 7), entry.col).value)
+            entry_score[ename] = weighted_score
+
+    entries_clist = mainsh.range('B10:Q10')
+    for entry in entries_clist:
+        ename = entry.value
+        if ename:
+            weighted_score = int(mainsh.cell((entry.row + 7), entry.col).value)
+            entry_score[ename] = weighted_score
+
+    # sort the dict by weighted score
+    ordered_entry_score = sorted(entry_score.items(), key=operator.itemgetter(1))
+    range_build = "T" + str(3) + ":U" + str(27)
+    cell_list = mainsh.range(range_build)
+
+    cell_index = 0
+
+    for entry in ordered_entry_score:
+        entry_name = entry[0]
+        score = entry[1]
+
+        if entry_name and score:
+            cell_list[cell_index].value = str(entry_name)
+            cell_index += 1
+            cell_list[cell_index].value = str(score)
+            cell_index += 1
+            logging.info("Adding (%s, %s)" % (entry_name, score))
+
+    mainsh.update_cells(cell_list)
 
 
 if __name__ == '__main__':
