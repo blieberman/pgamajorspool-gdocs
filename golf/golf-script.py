@@ -16,10 +16,11 @@ from oauth2client.service_account import ServiceAccountCredentials
 TOURNAMENT_ID = "014"
 GOLF_LEADERBOARD = "https://statdata.pgatour.com/r/" + TOURNAMENT_ID + "/leaderboard-v2mini.json"
 
-GDOC_JSON_KEY_PATH = os.path.join(os.path.expanduser("~"), 'google_application_credentials.json')
+GDOC_JSON_KEY_PATH = os.path.join(
+    os.path.expanduser("~"), 'google_application_credentials.json')
 GDOC_KEY = "1bDt2NQulTVks0UFypCtD80YC9yR5HkjxHwCW3m2lmNs"
 GDOC_FEED_ENDPOINT = "https://spreadsheets.google.com/feeds"
-GDOC_SHEET_NAME = "Masters 2018"
+GDOC_SHEET_NAME = "Masters 2019"
 
 
 # returns round number based on day of week
@@ -31,23 +32,28 @@ def getRound():
 def main():
     # authenticate to google
     scope = [GDOC_FEED_ENDPOINT]
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(GDOC_JSON_KEY_PATH, scope)
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        GDOC_JSON_KEY_PATH, scope)
     gc = gspread.authorize(credentials)
-    sh = gc.open_by_key(GDOC_KEY)
+
     # open spreadsheet
+    sh = gc.open_by_key(GDOC_KEY)
     mainsh = sh.worksheet(GDOC_SHEET_NAME)
+
     # set player name range based on your spreadsheet
-    players_clist = mainsh.range('A24:A60')
+    players_clist = mainsh.range('A24:A56')
+
     # get the round
     ROUND = getRound()
-    # get the full leaderboard from api
 
+    # get the full leaderboard from api
     r = requests.get(GOLF_LEADERBOARD)
     scores = r.json()
 
     # parse scores and push data to spreadsheet in correct format
     for player in scores["leaderboard"]["players"]:
-        name = player["player_bio"]["first_name"] + " " + player["player_bio"]["last_name"]
+        name = player["player_bio"]["first_name"] + " " + player["player_bio"][
+            "last_name"]
 
         for gplayer in players_clist:
             gname = gplayer.value
@@ -56,15 +62,18 @@ def main():
                 thru = player["thru"]
                 if not thru:
                     round_score = ""
-                mainsh.update_cell(gplayer.row, (gplayer.col + ROUND), round_score)
+                mainsh.update_cell(gplayer.row, (gplayer.col + ROUND),
+                                   round_score)
                 # debug
                 print("%s: %s" % (name, round_score))
                 break
 
     # update the cut line
-    projected_cut = scores["leaderboard"]["cut_line"]["cut_line_score"]
-    mainsh.update_cell(22, 1, projected_cut)
-    print("projected_cut: %s" % projected_cut)
+    if ROUND > 1:
+        projected_cut = scores["leaderboard"]["cut_line"]["cut_line_score"]
+
+        mainsh.update_cell(22, 1, projected_cut)
+        print("projected_cut: %s" % projected_cut)
 
     # create ranked scoreboard for google sheet entries
     # create an entry to scores dict
@@ -89,7 +98,8 @@ def main():
             entry_score[ename] = int(weighted_score)
 
     # sort the dict by weighted score
-    ordered_entry_score = sorted(entry_score.items(), key=operator.itemgetter(1))
+    ordered_entry_score = sorted(
+        entry_score.items(), key=operator.itemgetter(1))
     range_build = "J" + str(25) + ":K" + str(55)
     cell_list = mainsh.range(range_build)
 
@@ -110,7 +120,8 @@ def main():
 
     mainsh.update_cells(cell_list)
 
+    return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())
-
