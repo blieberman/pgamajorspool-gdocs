@@ -1,1 +1,1 @@
-*/5 * * * * source /home/blieberman/pgamajorspool-gdocs/env/bin/activate && /home/blieberman/pgamajorspool-gdocs/golf/golf-script.py > /dev/null 2>&1
+*/5 * * * * source ~/repos/pgamajorspool-gdocs/env/bin/activate && ~/repos/pgamajorspool-gdocs/golf/golf-script.py > /dev/null 2>&1
